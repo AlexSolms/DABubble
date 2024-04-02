@@ -1,0 +1,55 @@
+<main>
+  <section class="thread-header">
+    <div class="headline">Thread</div>
+    <div class="tag-name"># Placeholder</div>
+    <div class="close-img">
+      <img src="../../../assets/img/icons/close.svg" alt="close-btn" (click)="closeThread()" />
+    </div>
+  </section>
+  <section class="message-container">
+    <!-- first element -->
+    <div>
+      <div class="initialuserCurrent" [ngClass]="checkIfCurrentuser() ? '':'otherInitialUser'">
+        <div class="userContent">
+          <div class="info-area">
+            <div class="infoContainer" [ngClass]="checkIfCurrentuser() ? '':'otherInitialUser'">
+              <span class="messageTime">{{ globalVariables.messageThreadStart.timestamp | date: 'H:mm' }}</span>
+              <span class="userName">{{ globalVariables.messageThreadStart.userName }}</span>
+            </div>
+            <div class="speechBubble" [ngClass]="checkIfCurrentuser() ? '':'otherSpeachbubble'">
+              <span class="speech-bubble-current-user-text">{{ globalVariables.messageThreadStart.message }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="user">
+          <img [src]="globalVariables.messageThreadStart.img" alt="" />
+        </div>
+
+      </div>
+      <div class="partingLineContainer">
+        <div *ngIf="globalVariables.answerCount !== 0" class="partingLineText">{{ globalVariables.answerCount }}
+          <span> Antwort</span>
+          <span *ngIf="globalVariables.answerCount !== 1">en</span>
+        </div>
+        <div class="partingLine"></div>
+      </div>
+    </div>
+    <app-all-messages class="allMessages" [isChat]="false" [isThread]="true"></app-all-messages>
+
+  </section>
+  <!-- input marnie-->
+  <!-- container for all inputfield and controll elements -->
+  <section class="inputfield">
+    <app-inputfield [classes]="['standard', 'inputFieldChat']" type="text" placeholder="Deine Nachricht"
+      [(ngModel)]="globalVariables.messageData.message"></app-inputfield>
+    <div class="controllElementsContainer">
+      <div class="moreControls">
+        <img src="assets/img/input-imgs/add.svg" alt="">
+        <div class="inputFieldVerticalLine"></div>
+        <img src="assets/img/input-imgs/sentiment_satisfied.svg" alt="">
+        <img src="assets/img/input-imgs/alternate_email.svg" alt="">
+      </div>
+      <img src="assets/img/input-imgs/send.svg" alt="send button" (click)="sendMessage()">
+    </div>
+  </section>
+</main>

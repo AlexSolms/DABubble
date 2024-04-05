@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { User } from 'app/models/user.class';
-import { Firestore, collection, doc, setDoc, updateDoc, onSnapshot, getDoc, getDocs, query, where } from '@angular/fire/firestore';
+import { Firestore, collection, doc, setDoc, updateDoc, onSnapshot, getDoc, getDocs, query, where, arrayUnion } from '@angular/fire/firestore';
 import { GlobalVariablesService } from 'app/services/app-services/global-variables.service';
 import { AuthService } from './auth.service';
 import { Router } from '@angular/router';
@@ -16,7 +16,8 @@ export class FirebaseUserService {
   private authService = inject(AuthService);
   private auth = inject(Auth);
   private router = inject(Router);
-  constructor() { }
+  constructor() {
+   }
 
   getUsersRef() {
     return collection(this.firestore, 'users');
@@ -32,6 +33,11 @@ export class FirebaseUserService {
 
   async addUser(uid: string, userData: any) {
     await setDoc(doc(this.firestore, "users", uid), this.getCleanJson(userData));
+  }
+
+  async userExists(uid: string): Promise<boolean> {
+    const userDoc = await getDoc(doc(this.firestore, "users", uid));
+    return userDoc.exists();
   }
 
   searchUsersByName(searchTerm: string): Observable<any[]> {
@@ -65,14 +71,17 @@ export class FirebaseUserService {
         let logedInUser = new User(user.data());
         this.globalVariables.currentUser = logedInUser;
         this.globalVariables.activeID = user.id;
+        this.updateUserStatus(this.globalVariables.activeID, true);
       }
     });
   }
 
   async logout() {
     try {
-      await this.updateUserStatus(this.auth.currentUser!.uid, false);
+      //await this.updateUserStatus(this.auth.currentUser.uid, false);
       await this.authService.logout();
+      await this.updateUserStatus(this.globalVariables.activeID, false);
+      this.globalVariables.activeID = '';
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -89,5 +98,41 @@ export class FirebaseUserService {
   async getUserData(id: string) {
     const docSnap = await getDoc(this.getSingleUserRef(id));
     return docSnap.data();
+  }
+
+  /** 
+   * get docId with searching the name in Users to find Doc ID
+   */
+
+  async getUserDocIdWithName(name: string): Promise<string[]> {
+    const usersCollectionRef = collection(this.firestore, 'users');
+    const q = query(usersCollectionRef, where('name', '==', name));
+    const querySnapshot = await getDocs(q);
+    const docIds: string[] = [];
+    querySnapshot.forEach(doc => {
+      docIds.push(doc.id);
+      console.log(doc.id, " => ", doc.data());
+    });
+    return docIds;
+  }
+
+  /**
+   * Adds the chatId to the user.
+   * @param docId - id of user
+   * @param chatId id of chat (globale variable)
+   */
+  async addChatIdToUser(docId: string, chatId: string) {
+    const userDocRef = doc(this.firestore, 'users', docId);
+    const userDocSnapshot = await getDoc(userDocRef);
+    if (userDocSnapshot.exists()) {
+      const userData = userDocSnapshot.data();
+      if (userData['relatedChats'] && Array.isArray(userData['relatedChats'])) {
+        await updateDoc(userDocRef, { relatedChats: arrayUnion(chatId) });
+      } else {
+        await updateDoc(userDocRef, { relatedChats: [chatId] });
+      }
+    } else {
+      console.error('Benutzer mit der angegebenen UID wurde nicht gefunden.');
+    }
   }
 }

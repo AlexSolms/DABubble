@@ -1,17 +1,18 @@
 <section class="message">
-  <div class="user" (click)="globalFunctions.openProfile(false, message.userId)">
-    <img [src]="user.img" alt="" />
+  <div class="user" (click)="globalFunctions.openProfile(false, message.userId)"  >
+    <img *ngIf="user.img" [src]="user.img" alt="" />
   </div>
   <div class="info-area">
     <div class="info-area-wrapper">
-      <span class="username">{{ user.name }}</span>
+      <span class="username"  *ngIf="user.name">{{ user.name }}</span>
       <span class="messagetime">{{ postingTime | date : "H:mm" }}</span>
     </div>
     <div class="speech-bubble"(click)="onSelectMessage()">
-      <span class="speech-bubble-text"  *ngIf="!isImage">{{ message.message }}</span>
+      <span class="speech-bubble-text"  *ngIf="messageInfo.message !== ''">{{ messageInfo.message }}</span>
       <div class="loadedImg" *ngIf="isImage">
-        <img src="{{ message.message }}" alt="">
+        <img src="{{ messageInfo.messageImgUrl }}" alt="">
       </div>
+      <span class="speech-bubble-text"  *ngIf="messageInfo.textAfterUrl !== ''">{{ messageInfo.textAfterUrl }}</span>
     </div>
     <app-reactions class="reaction-field" *ngIf="openReaction" 
       [message]="message" [originalMessage]="originalMessage"></app-reactions><!--  && selectedMessage === message.id -->

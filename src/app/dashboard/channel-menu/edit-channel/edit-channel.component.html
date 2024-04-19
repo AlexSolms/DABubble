@@ -78,12 +78,13 @@
         caption="Channel Löschen"
         (click)="firebaseChannelService.deleteChanel(globalVariables.channelData.chatId)"
         imgPath=""
+        
       ></app-button>
     
       <app-button
         [classes]="['primary']"
         caption="Channel verlassen"
-        (click)="globalFunctions.closeEditOverlay()"
+        (click)="leaveChannel()"
         imgPath=""
       ></app-button>
     </div>

@@ -48,7 +48,6 @@ export class AddToChannelComponent implements OnDestroy {
   selectedUsers: any = [];
   userIdToAdd: string = '';
 
-
   channel: channel = {
     description: '',
     channelName: '',
@@ -58,10 +57,7 @@ export class AddToChannelComponent implements OnDestroy {
     channelMember: [],
   };
 
-
-  // channelId: string | undefined; 
-  newUserId: string | undefined; 
-
+  newUserId: string | undefined;
 
   selectedUserName: string = '';
 
@@ -71,22 +67,26 @@ export class AddToChannelComponent implements OnDestroy {
 
   selectedUserDetails: { name: string; img: string } = { name: '', img: '' };
 
-  constructor(private userService: FirebaseUserService, private firestore: Firestore) {
+  constructor(
+    private userService: FirebaseUserService,
+    private firestore: Firestore
+  ) {
     this.searchInput
-    .pipe(
-      debounceTime(300), // Verzögere die Ausführung, um Rapid-Fire-Anfragen zu vermeiden
-      distinctUntilChanged(), // Führe die Suche nur aus, wenn sich der Suchtext geändert hat
-      switchMap(searchTerm => this.userService.searchUsersByName(searchTerm)),
-      takeUntil(this.destroy$)
-    )
-    .subscribe(filteredUsers => {
-      this.users = filteredUsers;
-    });
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((searchTerm) =>
+          this.userService.searchUsersByName(searchTerm)
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((filteredUsers) => {
+        this.users = filteredUsers;
+      });
   }
 
   ngOnInit(): void {
-    this.globalFunctions.getCollection('users', this.allUsers); 
-    console.log(this.allUsers);
+    this.globalFunctions.getCollection('users', this.allUsers);
   }
 
   ngOnDestroy() {
@@ -94,53 +94,35 @@ export class AddToChannelComponent implements OnDestroy {
     this.destroy$.complete();
   }
 
-  // onSearchChange(searchValue: string): void {
-  //   if (!searchValue) {
-  //     this.users = [];
-  //     return;
-  //   }
-  
-  //   this.searchInput.next(searchValue);
-  // }
-
-  // addUserToList(user: any) {
-  //   this.selectedUser.push(user.id);
-  // }
-
-  // selectChannel(channelId: string): void {
-  //   console.log(`Channel ausgewählt: ${channelId}`);
-  //   this.channelId = channelId;
-  // }
-  
   async selectUser(user: any) {
-    this.selectedUser = user;
-    this.selectedUserDetails.name = user.name;
-    this.selectedUserDetails.img = user.img; // Stellen Sie sicher, dass 'img' ein gültiger Schlüssel im Benutzerobjekt ist
-  
+    if (!Array.isArray(this.selectedUser)) {
+      this.selectedUser = [];
+    }
+    this.selectedUser.push(user);
+
     let userId = await this.firebaseUserService.getUserDocIdWithName(user.name);
     this.userIdToAdd = userId[0];
-    console.log(`Benutzer ausgewählt: ${user.name}`, 'ID:', this.userIdToAdd);
-  
-    // Reset der Suche und Auswahl
+
     this.selectedUserName = user.name;
     this.searchText = '';
     this.users = [];
   }
 
-  clearSelectedUser() {
-    this.selectedUserName = '';
-    this.selectedUserDetails = { img: '', name: '' }; // Stellen Sie sicher, dass dies die Struktur von selectedUserDetails entspricht
-    // Führen Sie hier zusätzliche Bereinigungsaktionen durch, falls erforderlich
+  deleteUserFromSelect(i: number) {
+    this.selectedUser.splice(i, 1);
   }
-
 
   async addUsersToExistingChannel() {
     if (!this.globalVariables.openChannel.id || !this.selectedUser) {
       return;
     }
-  
-    const channelRef = doc(this.firestore, 'channels', this.globalVariables.openChannel.id);
-  
+
+    const channelRef = doc(
+      this.firestore,
+      'channels',
+      this.globalVariables.openChannel.id
+    );
+
     try {
       await updateDoc(channelRef, {
         members: arrayUnion(this.userIdToAdd),
@@ -150,22 +132,19 @@ export class AddToChannelComponent implements OnDestroy {
       console.error('Fehler beim Hinzufügen des Benutzers:', error);
     }
 
-    this.firebaseUserService.addChatIdToUser(this.userIdToAdd, this.globalVariables.openChannel.chatId);
+    this.firebaseUserService.addChatIdToUser(
+      this.userIdToAdd,
+      this.globalVariables.openChannel.chatId
+    );
+
+    this.globalFunctions.closeAddContactsOverlay();
   }
-
-  // data(): {} {
-  //   const userChange = this.selectedUser !== this.channel.channelMember;
-  //   const data: { [key: string]: any } = {};
-  //   if (userChange) data['members'] = this.selectedUser;
-  //   return data;
-  // }
-
 
   onSearchChange(searchValue: string): void {
     if (!searchValue) {
-        this.users = [];
-        return;
+      this.users = [];
+      return;
     }
     this.searchInput.next(searchValue);
-}
+  }
 }

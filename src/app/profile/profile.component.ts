@@ -49,7 +49,7 @@ export class ProfileComponent {
    * this function sets the isPopupOpen flag and take over profile data for the choosen user
    */
   async ngOnInit() {
-    this.isPopupOpen = true;   
+    this.isPopupOpen = true;  
     this.globalVariables.userToChatWith.id = this.globalVariables.profileUserId; 
     const userData = await this.firebaseService.getUserData(this.globalVariables.profileUserId);
     this.profile = new User(userData); 

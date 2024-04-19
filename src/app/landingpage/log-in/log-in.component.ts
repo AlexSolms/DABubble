@@ -16,13 +16,14 @@ import { Router } from '@angular/router';
   styleUrl: './log-in.component.scss',
   imports: [CommonModule, InputfieldComponent, ButtonComponent, FormsModule, DialogComponent]
 })
+
 export class LogInComponent {
   globalVariables = inject(GlobalVariablesService);
   private userService = inject(FirebaseUserService);
   private authService = inject(AuthService);
   private router = inject(Router);
   constructor() {
-    this.globalVariables.imprintActiv = false;
+    this.globalVariables.imprintActive = false;
     this.globalVariables.signup = false;
   }
 
@@ -38,8 +39,8 @@ export class LogInComponent {
       const userCredential = await this.authService.login(email, password);
       const uid = userCredential.user.uid;
       this.globalVariables.activeID = uid;
-      await this.userService.updateUserStatus(uid, true);
       this.userService.updateCurrentUser(uid);
+      this.globalVariables.logout = false;
       this.router.navigate(['/dashboard']);
     } catch (error) {
     }
@@ -49,10 +50,10 @@ export class LogInComponent {
     try {
       const userCredential = await this.authService.loginWithGoogle();
       if (userCredential) {
-        console.log("Erfolgreich mit Google angemeldet", userCredential);
         const uid = userCredential.uid;
         this.globalVariables.activeID = uid;
         this.userService.updateCurrentUser(uid);
+        this.globalVariables.logout = false;
         const userExists = await this.userService.userExists(uid);
         if (!userExists) {
           await this.userService.addUser(userCredential.uid, {

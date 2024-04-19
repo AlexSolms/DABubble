@@ -12,6 +12,7 @@ export class GlobalVariablesService {
   desktop900: boolean = window.innerWidth > 900;
   desktop1200: boolean = window.innerWidth > 1200;
   login: boolean = false;
+  logout: boolean = false;
   signup: boolean = false;
   accountAdjustment: boolean = false;
 
@@ -26,7 +27,7 @@ export class GlobalVariablesService {
   profileUserId: string = '';
 
   // Flags to manage chat
-  channel: boolean = false;
+  showAddChannel: boolean = false;
   adduser: boolean = false;
   openReaction: boolean = false;
   editChannelOverlayOpen: boolean = false;
@@ -37,8 +38,9 @@ export class GlobalVariablesService {
   isEditingChannel: boolean = false;
   headerShowMembers: boolean = false;
   newMessage: string = '';
-  showEmojiContainer: boolean = false;
+  //showEmojiContainer: boolean = false;
   scrolledToBottom: boolean = false;
+  isMembersPopupOpen: boolean = false;
 
   //take over selected Emoji
   selectedEmoji = {
@@ -51,6 +53,9 @@ export class GlobalVariablesService {
   showChannelMenu: boolean = true;
   isChatVisable: boolean = false;
   showThread: boolean = false;
+  bufferThreadOpen: boolean = false;
+  isMenuOpen: boolean = false;
+
 
   openChat: string = ''; // used in openAnswers() to come back to the chat
   isUserChat: boolean = false; //used as flag to show in chat the header for user chat
@@ -106,10 +111,11 @@ export class GlobalVariablesService {
   //this is the object for the active channel information. Used in channel-menu
   openChannel = {
     titel: 'Willkommen',
-    desc: '',
+    desc: 'moin',
     id: 'fsjWrBdDhpg1SvocXmxS',
     chatId: 'NQMdt08FAcXbVroDLhvm',
-    creator: '',
+    creator: 'v7pZ6K5geifCK8a30Epa1YuSlER2',
+    memberCount: 11
   };
 
   //this Array contains all users of the active chat
@@ -128,7 +134,8 @@ export class GlobalVariablesService {
     channelName: '',
     chatId: '',
     id: '',
-    creator: ''
+    creator: '',
+    members: [] as any[],
     /* owner: '',
     allowedUser: ['id1', '1d2'] */
   };
@@ -152,7 +159,8 @@ export class GlobalVariablesService {
 
   editMessage: boolean = false;
 
-  imprintActiv = false;
+  imprintActive = false;
+  showSplashScreen = false;
 
   constructor() { }
 

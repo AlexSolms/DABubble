@@ -13,7 +13,6 @@ import {
   collection,
   onSnapshot,
   updateDoc,
-  arrayUnion,
   arrayRemove,
 } from '@angular/fire/firestore';
 import { GlobalVariablesService } from 'app/services/app-services/global-variables.service';
@@ -44,7 +43,7 @@ export class CurrentUserMessageComponent {
   globalFunctions = inject(GlobalFunctionsService);
   firebaseChatService = inject(FirebaseChatService);
   firebaseUpdate = inject(FirebaseUserupdateService);
-  openReaction: boolean = false;
+
 
   @Input() message: any;
   @Input() index: any;
@@ -65,18 +64,16 @@ export class CurrentUserMessageComponent {
   profile: User = { img: '', name: '', isActive: false, email: '', relatedChats: [] };
   mouseover: boolean = false;
   hoverUser: string = '';
+  openReaction: boolean = false;
 
   unsubUser;
   userId: string = 'guest';
   answerKey: string = '';
   answercount: number = 0;
   lastAnswerTime: number = 0;
-  //messageImgUrl: string = '';
-  // messageText: string = '';
-  // textAfterUrl: string = '';
-  // notAllowedChars: string = '';
 
-  count = '';
+  hoverIndex: number = 0;
+  count: number = 0;
   isImage: boolean = false;
 
   constructor(
@@ -90,7 +87,7 @@ export class CurrentUserMessageComponent {
    * this function unsubscribes the containing content
    */
   ngOnDestroy() {
-    this.unsubUser;
+    this.unsubUser();
   }
 
   /**
@@ -127,30 +124,6 @@ export class CurrentUserMessageComponent {
     this.isImage = this.messageInfo.hasUrl;
   }
 
-  /**
-   * 
-   * @param message 
-   * @returns 
-   */
-  /*  checkMessage(message: string): boolean {
-    // const urlPattern = /(http(s)?:\/\/)?(www\.)?[a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
-    // const urlMatch = message.match(urlPattern);
-   const urlMatch = this.globalFunctions.checkForURL(message);
-     if (urlMatch) {
-       this.messageImgUrl = urlMatch;
-       const textBeforeUrl = message.split(urlMatch)[0].trim();
-       this.textAfterUrl = message.split(urlMatch)[1].trim();
-       //this.notAllowedChars = this.globalFunctions.isMessageValid(this.textAfterUrl);
-      // this.notAllowedChars += this.globalFunctions.isMessageValid(textBeforeUrl);
-        this.messageText = textBeforeUrl;
-     } else { // if no URL in message:
-       this.messageText = message;
-       //der check, ob es sich um erlaupten Input handelst muss in die Eingabe
-      // this.notAllowedChars = this.globalFunctions.isMessageValid(message);
-      }
-     return !!urlMatch;
-   } */
-
 
 
 
@@ -178,6 +151,7 @@ export class CurrentUserMessageComponent {
 
 
   openAnswers() {
+    this.globalVariables.bufferThreadOpen = !this.globalVariables.bufferThreadOpen; 
     this.globalVariables.showThread = !this.globalVariables.showThread;
     this.globalVariables.answerKey = this.answerKey;
     this.globalVariables.answerCount = this.answercount;
@@ -199,13 +173,16 @@ export class CurrentUserMessageComponent {
   }
 
   onSelectMessage() {
-    this.activeMessage = !this.activeMessage;
-    this.openReaction = !this.openReaction;
+    if(!this.activeMessage)this.globalVariables.editMessage = false;
+    this.activeMessage = true;
+    this.openReaction = true;
+    
   }
 
   @HostListener('document:click', ['$event'])
   onClick(event: any) {
     if (!this.elementRef.nativeElement.contains(event.target)) {
+      if(!this.globalVariables.editMessage)
       this.onCloseReactions();
     }
   }
@@ -248,30 +225,27 @@ export class CurrentUserMessageComponent {
    *
    * @returns - name of first user of emoji
    */
-  async getFirstUserOfEmoji() {
-    let lenght = this.message.emoji[0].userId.length - 1;
-    let userId = this.message.emoji[0].userId[0];
+  async getFirstUserOfEmoji(index: number) {
+    let length = this.message.emoji[index].userId.length;
+    let userId = this.message.emoji[index].userId[0];
     if (userId !== '') {
-      let x = await this.firebaseUpdate.getUserData(userId);
-      this.profile = new User(x);
+      let userData = await this.firebaseUpdate.getUserData(userId);
+      this.profile = new User(userData);
       this.hoverUser = this.profile.name;
-      this.count = lenght.toString();
+      this.count = length - 1;
     }
   }
 
-  @HostListener('mouseover')
-  onMouseOver() {
-    if (this.message.emoji[0].icon) {
+  onMouseOver(index: number) {
+    if (this.message.emoji[index].icon) {
       this.mouseover = true;
-      this.getFirstUserOfEmoji();
+      this.hoverIndex = index;
+      this.getFirstUserOfEmoji(index);
     }
   }
 
-  @HostListener('mouseout')
   onMouseOut() {
     this.mouseover = false;
   }
-
-
-
+ 
 }

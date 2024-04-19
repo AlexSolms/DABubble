@@ -4,16 +4,9 @@
       <img src="../../assets/img/icons/Workspace logo.svg" alt="" />
       <p class="header-text">Code Learning</p>
     </div>
-    <div class="edit-img-div">
-      <img
-        class="edit-img"
-        src="../../assets/img/icons/edit_square.svg"
-        alt="edit"
-      />
-    </div>
   </section>
-  <app-inputfield [optionClasses]="['search-icon']" [classes]="'searchBar'" *ngIf="!globalVariables.desktop700" class="searchBarContainer" type="search" imgName="search" placeholder="Code learning durchsuchen"></app-inputfield>
-      
+  <app-searchbar *ngIf="!globalVariables.desktop900" [classes]="['searchBarChannelMenu', 'searchBar']"></app-searchbar>
+
   <section class="contentSection">
     <div class="all-channel">
       <div class="channel-dialog">
@@ -26,26 +19,26 @@
             <p>Channels</p>
           </div>
         </div>
-        <div class="add-channel" (click)="globalFunctions.openChannelOverlay()">
+        <div class="add-channel" (click)="openChannelOverlay()">
           <img src="../../../assets/img/icons/add.svg" alt="" />
         </div>
       </div>
       <div class="channel-overview d-none" id="channels">
         <div class="channel-overview">
-          <div class="channel-wrapper" *ngFor="let channel of allChannels" (click)="openChannel(channel)"> <!-- globalFunctions. -->
-            <p><span>#</span>{{ channel.channelName }}</p> <!--  (click)="openChannelChat()" -->
-          </div>
+          <div class="channel-wrapper" *ngFor="let channel of channelToDisplay" (click)="openChannel(channel)">
+            <p><span>#</span>{{ channel.channelName }}</p>
           </div>
         </div>
-        <div></div>
-        <div></div>
       </div>
-      <div class="channel-add" (click)="globalFunctions.openChannelOverlay()">
-        <a class="menu-adder">
-          <img src="../../../assets/img/icons/add_circle.svg" alt="" />
-          <p>Channel hinzufügen</p>
-        </a>
-      </div>
+      <div></div>
+      <div></div>
+    </div>
+    <div class="channel-add" (click)="openChannelOverlay()">
+      <a class="menu-adder">
+        <img src="../../../assets/img/icons/add_circle.svg" alt="" />
+        <p>Channel hinzufügen</p>
+      </a>
+    </div>
     <div class="direct-messages">
       <div class="messages-wrapper">
         <div class="channel-arrow-dropdown" (click)="openDirectMessageMenu()">
@@ -57,17 +50,14 @@
         </div>
       </div>
       <div class="user-wrapper d-none" id="directMessage">
-        <div
-          class="user-detail"
-          *ngFor="let user of allUsers"
-          (click)="this.globalFunctions.openDirectMessageUser(user)" 
-        > <!-- this.globalFunctions. -->
-          <p>
-            <img
-              [src]="user.img"
-              alt="userImage"
-            />{{ user.name }}
-          </p>
+        <div class="user-detail" *ngFor="let user of allUsers"
+          (click)="this.globalFunctions.openDirectMessageUser(user)">
+          <div class="userImgWithStatus">
+            <img class="userImg" [src]="user.img" alt="userImage" />
+            <img *ngIf="user.isActive" class="status" src="assets/img/icons/online.svg" alt="profile online">
+            <img *ngIf="!user.isActive" class="status" src="assets/img/icons/offline.svg" alt="profile offline"> 
+          </div>
+          <span>{{ user.name }}</span>
         </div>
       </div>
     </div>

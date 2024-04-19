@@ -2,7 +2,6 @@ import {
   Component,
   EventEmitter,
   Input,
-  OnInit,
   Output,
   inject,
 } from '@angular/core';
@@ -17,18 +16,20 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { GlobalFunctionsService } from 'app/services/app-services/global-functions.service';
+import { ClickedOutsideDirective } from 'app/directives/clicked-outside.directive';
 
 @Component({
   selector: 'app-reactions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ClickedOutsideDirective],
   templateUrl: './reactions.component.html',
   styleUrl: './reactions.component.scss',
 })
+
 export class ReactionsComponent {
   firestore: Firestore = inject(Firestore);
   globaleVariables = inject(GlobalVariablesService);
-  globaleFunction = inject(GlobalFunctionsService);
+  globalFunctions = inject(GlobalFunctionsService);
   firebaseChatService = inject(FirebaseChatService);
   @Output() newEmoji = new EventEmitter<string>();
   @Input() message: any;
@@ -39,9 +40,16 @@ export class ReactionsComponent {
   editMessage: boolean = false;
   showValidatePopup=false;
   forbiddenChars: string = '';
+  downloadURL = '';
+  downloadURLAlias = ''
+  messageInfo = { hasUrl: false, message: '', textAfterUrl: '', messageImgUrl: '' };
+  isImage: boolean = false;
 
+  showEmojiList: boolean = false;
   emojiList: Array<any> = [];
   allEmojis: Array<any> = []; // wo wird das gebraucht? 
+
+  chatFamiliy: string = '';
 
   url =
     'https://emoji-api.com/emojis?access_key=60ede231f07183acd1dbb4bdd7dde0797f62e95e';
@@ -51,7 +59,28 @@ export class ReactionsComponent {
    */
   ngOnInit(): void {
     this.getEmojis();
+    this.messageInfo = this.globalFunctions.checkMessage(this.message.message);
+    this.isImage = this.messageInfo.hasUrl;
+    this.switchUrlWithAlias();
+    this.chatFamiliy = this.globaleVariables.isUserChat ? 'chatusers' : 'chatchannels';
   }
+
+  /**
+   * this function replaces the URL with the image name
+   */
+  switchUrlWithAlias(){
+    if(this.isImage){
+      this.downloadURL = this.messageInfo.messageImgUrl;
+      if (this.downloadURL) {
+        const url = new URL(decodeURIComponent(this.downloadURL));
+        const pathnameParts = url.pathname.split('/');
+        const fileName = pathnameParts.pop(); 
+        this.downloadURLAlias = fileName ? fileName : '';
+        this.message.message = this.message.message.replace(this.downloadURL, this.downloadURLAlias);
+      }
+    }
+    this.isImage =false; 
+   }
 
   /**
    * Emoji fetch from API
@@ -108,54 +137,48 @@ export class ReactionsComponent {
    * Open and close Emoji Picker depend on style value.
    */
   openEmojis() {
-    const emojiDiv = document.getElementById('emoji-selector');
-    if (emojiDiv) {
-      if (emojiDiv.style.display === 'none') {
-        emojiDiv.style.display = 'flex';
-      } else {
-        emojiDiv.style.display = 'none';
-      }
-    }
+    this.showEmojiList = !this.showEmojiList;
   }
 
-  addEmoji() {
+  /**
+   * this function adds the new object to firebase and hemoves the old one
+   */
+  addEmoji() {  
     this.globaleVariables.messageData = this.message;
-    let chatFamiliy = this.globaleVariables.isUserChat ? 'chatusers' : 'chatchannels';
-    this.firebaseChatService.sendMessage(this.globaleVariables.openChannel.chatId, chatFamiliy);
-    this.remove(this.globaleVariables.openChannel.chatId, chatFamiliy);
+    this.globaleVariables.messageData.message = this.originalMessage.message;
+    this.firebaseChatService.sendMessage(this.globaleVariables.openChannel.chatId, this.chatFamiliy);
+    this.remove(this.globaleVariables.openChannel.chatId, this.chatFamiliy);
   }
 
-
+/**
+ * this function removes the old message from firebase
+ * @param chatId - string - id of doc which needs to be deleted
+ * @param chatFamiliy - string - userchat or chanelchat
+ */
   remove(chatId: string, chatFamiliy: string) {
-    return updateDoc(doc(this.firestore, chatFamiliy, chatId), {
+     updateDoc(doc(this.firestore, chatFamiliy, chatId), {
       messages: arrayRemove(this.originalMessage),
     });
   }
 
-  editOpen() {
-    this.globaleVariables.editMessage = true;
-  }
-
   /**
-   * diese funktion sollte vergleichen, hinzufügen
-   * @param element
-   * @returns
+   * this function opens shows the edit Message options
    */
-/*   helper(element: any): any {
-    if (element) {
-      const activeID = this.globaleVariables.activeID;
-      if (!element.userId.includes(activeID)) {
-        element.userId.push(activeID);
-      }
-    }
-    return {
-      icon: element.icon,
-      userId: element.userId,
-      iconId: element.iconId
-    };
+  editOpen() { 
+    this.globaleVariables.editMessage = true; 
   }
- */
+  /**
+   * this function opens hides the edit Message options
+   */
+  closeEdit(){
+    this.globaleVariables.editMessage = false;
+  }
 
+/**
+ * 
+ * @param element 
+ * @param userIdAsArray 
+ */
   getEmojiUserId(element: any, userIdAsArray: any[]) {
     let userIds = element.userId;
     if (Array.isArray(userIds)) {
@@ -183,13 +206,20 @@ export class ReactionsComponent {
     }
   }
 
+  /**
+   * this function closes the edit message 
+   */
   editClose() {
     this.globaleVariables.editMessage = false;
     this.message.message = this.originalMessage.message;
   }
 
+  /**
+   * this function replaces the old message with the new message
+   */
   editSave() {
-    this.forbiddenChars = this.globaleFunction.isMessageValid(this.message.message); 
+    this.forbiddenChars = this.globalFunctions.isMessageValid(this.message.message); 
+    this.message.message = this.message.message.replace(this.downloadURLAlias, this.downloadURL);
     if (this.forbiddenChars.length === 0) {
       this.globaleVariables.editMessage = false;
       this.globaleVariables.messageData = this.message;
@@ -205,6 +235,9 @@ export class ReactionsComponent {
     }
   }
   
+  /**
+   * this function hides the validationPopup
+   */
   closeValidatePopup(){   
     this.showValidatePopup=false;
   }

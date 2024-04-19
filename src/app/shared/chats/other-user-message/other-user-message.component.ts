@@ -11,9 +11,6 @@ import { FirebaseChatService } from 'app/services/firebase-services/firebase-cha
 import {
   Firestore,
   doc,
-  collection,
-  onSnapshot,
-  getDoc,
   updateDoc,
   arrayRemove,
 } from '@angular/fire/firestore';
@@ -48,7 +45,6 @@ export class OtherUserMessageComponent {
   openReaction: boolean = false;
   @Input() message: any;
   @Input() isThread: boolean = false;
-  // @Input() userName: string = '';
 
   emojiArray: Emoji[] = [];
   postingTime: string | null = null;
@@ -66,20 +62,17 @@ export class OtherUserMessageComponent {
   answerKey: string = '';
   answercount: number = 0;
   lastAnswerTime: number = 0;
-  // messageImgUrl: string = '';
-  // messageText: string = '';
-  // textAfterUrl: string = '';
 
   profile: User = { img: '', name: '', isActive: false, email: '', relatedChats: [] };
   mouseover: boolean = false;
   hoverUser: string = '';
-  count: string = '';
+  hoverIndex: number = 0;
+  count: number = 0;
   isImage: boolean = false;
 
   constructor(private elementRef: ElementRef) {
 
   }
-
 
   async getUser2(id: string) {
     this.user = new User(await this.firebaseUser.getUserData(id));
@@ -94,29 +87,9 @@ export class OtherUserMessageComponent {
     this.fillAnswerVariables();
     this.cloneOriginalMessage();
     this.messageInfo = this.globalFunctions.checkMessage(this.message.message);
-    // this.isImage = this.globalFunctions.checkMessage(this.message.message).hasUrl;
     this.isImage = this.messageInfo.hasUrl;
-
   }
 
-  /*  getMessageInfo(message: string): void {
-     this.messageInfo = this.globalFunctions.checkMessage(message);
-     console.log(this.messageInfo); // Hier kannst du auf die Rückgabewerte zugreifen und sie nutzen
-   } */
-
-  /*  checkMessage(message: string): boolean {
-     const urlPattern = /(http(s)?:\/\/)?(www\.)?[a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
-     const urlMatch = message.match(urlPattern);
-     if (urlMatch) {
-       this.messageImgUrl = urlMatch[0];
-       const textBeforeUrl = message.split(this.messageImgUrl)[0].trim();
-       this.textAfterUrl = message.split(this.messageImgUrl)[1].trim();
-       this.messageText = textBeforeUrl;
-     } else { // if no URL in message:
-       this.messageText = message;
-     }
-     return !!urlMatch;
-   } */
 
   /**
    * this function clones the original message object for later remove logic
@@ -143,6 +116,7 @@ export class OtherUserMessageComponent {
 
 
   openAnswers() {
+    this.globalVariables.bufferThreadOpen = !this.globalVariables.bufferThreadOpen;
     this.globalVariables.showThread = !this.globalVariables.showThread;
     this.globalVariables.answerKey = this.answerKey;
     this.globalVariables.answerCount = this.answercount;
@@ -165,6 +139,7 @@ export class OtherUserMessageComponent {
 
   onSelectMessage() {
     this.openReaction = !this.openReaction; //geändert, damit man es auch wieder schließen kann, wenn mannochmal auf das Element klickt
+    this.globalVariables.editMessage = false;
   }
 
   /**
@@ -219,27 +194,27 @@ export class OtherUserMessageComponent {
    *
    * @returns - name of first user of emoji
    */
-  async getFirstUserOfEmoji() {
-    let lenght = this.message.emoji[0].userId.length - 1;
-    let userId = this.message.emoji[0].userId[0];
+  async getFirstUserOfEmoji(index: number) {
+    let length = this.message.emoji[index].userId.length;
+    let userId = this.message.emoji[index].userId[0];
     if (userId !== '') {
-      let x = await this.firebaseUpdate.getUserData(userId);
-      this.profile = new User(x);
+      let userData = await this.firebaseUpdate.getUserData(userId);
+      this.profile = new User(userData);
       this.hoverUser = this.profile.name;
-      this.count = lenght.toString();
+      this.count = length - 1;
     }
   }
 
-  @HostListener('mouseover')
-  onMouseOver() {
-    if (this.message.emoji[0].icon) {
+  onMouseOver(index: number) {
+    if (this.message.emoji[index].icon) {
       this.mouseover = true;
-      this.getFirstUserOfEmoji();
+      this.hoverIndex = index;
+      this.getFirstUserOfEmoji(index);
     }
   }
 
-  @HostListener('mouseout')
   onMouseOut() {
     this.mouseover = false;
   }
+ 
 }

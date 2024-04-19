@@ -134,7 +134,6 @@ export class FirebaseChatService {
   changeActiveChannel() {
     if (this.unsubChat) this.unsubChat();
     this.chatExist = false;
-    //this.activeChatId = newChatId;
     this.globalVariables.chatChannel = new ChatChannel();
     let chatFamiliy = this.globalVariables.isUserChat ? 'chatusers' : 'chatchannels';
     this.unsubChat = this.getChat(chatFamiliy);
@@ -155,7 +154,7 @@ export class FirebaseChatService {
 
   toJson(): {} {
     return {
-      messages: this.chatChannel.messages,
+      messages: [],
       relatedChannelId: this.chatChannel.relatedChannelId,
     };
   }
@@ -203,7 +202,6 @@ export class FirebaseChatService {
    * @returns - JSON with data
    */
   newMessageToJson(): {} {
-    //console.log('was wird gesendet? ', this.globalVariables.messageData);
     return {
       message: this.globalVariables.messageData.message,
       userId: this.globalVariables.messageData.userId,

@@ -43,8 +43,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.auth.onAuthStateChanged(user => {
-      if (user) {
-       // console.log('Benutzer ist eingeloggt:', user);
+      if (user && this.globalVariables.logout === false) {
         this.userService.updateCurrentUser(user.uid);
       } else {
         console.log('Benutzer ist nicht eingeloggt.');

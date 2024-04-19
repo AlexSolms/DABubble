@@ -9,6 +9,7 @@ import { InputfieldComponent } from 'app/shared/inputfield/inputfield.component'
 //import { User } from 'app/models/user.class';
 import { CommonModule, DatePipe } from '@angular/common';
 import { GlobalFunctionsService } from 'app/services/app-services/global-functions.service';
+import { TextareaChatThreadComponent } from 'app/shared/textarea/textarea-chat-thread/textarea-chat-thread.component';
 
 interface Message {
   message: string;
@@ -26,7 +27,8 @@ interface Message {
     FormsModule,
     AllMessagesComponent,
     CommonModule,
-    DatePipe
+    DatePipe,
+    TextareaChatThreadComponent
   ],
   templateUrl: './thread.component.html',
   styleUrl: './thread.component.scss'
@@ -54,6 +56,7 @@ export class ThreadComponent {
   }
 
   closeThread() {
+    this.globalVariables.bufferThreadOpen = false;
     this.globalVariables.showThread = false;
     this.globalVariables.messageData.answerto = '';
     this.globalVariables.isChatVisable = true;
@@ -64,17 +67,4 @@ export class ThreadComponent {
     }
   }
 
-
-  sendMessage() {
-    
-    if (this.globalVariables.messageData.message !== '') {
-      this.globalVariables.messageData.userId = this.globalVariables.activeID;
-      this.globalVariables.messageData.timestamp = new Date().getTime();
-      this.firebaseChatService.sendMessage(this.globalVariables.openChannel.chatId, 'chatchannels');
-      console.log('was ist in activeID: ',this.globalVariables.activeID);
-      console.log('was ist in messageData: ',this.globalVariables.messageData);
-      this.globalVariables.messageData.message = '';
-
-    }
-  }
 }

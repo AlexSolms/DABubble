@@ -10,6 +10,7 @@ import { FirebaseUserService } from 'app/services/firebase-services/firebase-use
 import { Router } from '@angular/router';
 import { ToastService } from 'app/services/app-services/toast.service';
 import Aos from 'aos';
+import { FirebaseChannelService } from 'app/services/firebase-services/firebase-channel.service';
 
 @Component({
   selector: 'app-log-in',
@@ -22,6 +23,7 @@ import Aos from 'aos';
 export class LogInComponent {
   toastService = inject(ToastService);
   globalVariables = inject(GlobalVariablesService);
+  firebaseChannelService = inject(FirebaseChannelService);
   private userService = inject(FirebaseUserService);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -71,6 +73,7 @@ export class LogInComponent {
             img: userCredential.photoURL,
             relatedChats: ['NQMdt08FAcXbVroDLhvm'],
           });
+          this.addNewUserToWelcome(uid);
         }
         this.router.navigate(['/dashboard']);
       } else {
@@ -79,6 +82,11 @@ export class LogInComponent {
     } catch (error) {
       this.toastService.showMessage('Fehler bei der Verarbeitung der Google-Anmeldung');
     }
+  }
+
+  async addNewUserToWelcome(uid: string) {
+    const channelId = 'fsjWrBdDhpg1SvocXmxS';
+    this.firebaseChannelService.addUserToChannel(channelId, uid);
   }
 
   async loginAsGuest() {

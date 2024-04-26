@@ -7,6 +7,8 @@ import {
 } from '@angular/fire/firestore';
 import { FirebaseChatService } from '../firebase-services/firebase-chat.service';
 import { FirebaseChannelService } from '../firebase-services/firebase-channel.service';
+import { FirebaseUserService } from '../firebase-services/firebase-user.service';
+import { Subject } from 'rxjs';
 
 export interface MessageInfo {
   hasUrl: boolean;
@@ -23,6 +25,14 @@ export class GlobalFunctionsService {
   globalVariables = inject(GlobalVariablesService);
   firebaseChatService = inject(FirebaseChatService);
   firebaseChannelService = inject(FirebaseChannelService);
+  firebasUserService = inject(FirebaseUserService);
+
+  private focusSubject = new Subject<void>();
+  focus$ = this.focusSubject.asObservable();
+
+  triggerFocus() {
+    this.focusSubject.next();
+  }
 
   openProfile(ownProfile: boolean, userId: string) {
     this.globalVariables.profileUserId = userId;
@@ -36,14 +46,6 @@ export class GlobalFunctionsService {
       !this.globalVariables.showProfileMenu;
     this.freezeBackground(this.globalVariables.showProfileMenu);
   }
-
-/*   openChannelOverlay() {
-    this.globalVariables.showAddChannel = !this.globalVariables.showAddChannel;
-    if (this.globalVariables.showAddChannel) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = 'auto';
-    this.globalVariables.channelData.channelName = '';
-    this.globalVariables.channelData.description = '';
-  } */
 
   openEditChannelOverlay() {
     this.globalVariables.channelData.channelName = this.globalVariables.openChannel.titel;
@@ -91,14 +93,9 @@ export class GlobalFunctionsService {
     this.globalVariables.adduser = false;
   }
 
-/*   closeReactionDialog() {
-    this.globalVariables.showProfile = false;
-    this.globalVariables.adduser = false;
-  } */
 
   closeEditOverlay() {
     this.globalVariables.editChannelOverlayOpen = false;
-    //this.globalVariables.showProfile = false; // warum wird hier die Variable für das Profil gesetzt?
     document.body.style.overflow = 'auto';
   }
 
@@ -186,21 +183,10 @@ export class GlobalFunctionsService {
 
   constructor(private firestore: Firestore) { }
 
-  // simple function to get data from firestore returns a collection
-  /*  getData(item: string) {
-     let dataCollection = collection(this.firestore, item);
-     return collectionData(dataCollection, { idField: 'id' });
-   } */
+
 
   // function to get data from firebase and save it into an local Array
-  // Alex: 5.4.24: Diese Funktion wird in den Komponenten
-  // add-to-Channel
-  // add-contacts
-  // channel-menu
-  // benutzt. 
-  // Ich werde diese Funktion nach analyse in den einzelnen Komponenten verschieben
-  // und aus dem onSnapshot ggf eine getDoc machen.
-  // das Problem. Hier wird ein Snapshot aboniert der auch wieder deaboniert werden sollte
+
   async getCollection(item: string, targetArray: any) {
     const collectionReference = collection(this.firestore, item);
     onSnapshot(collectionReference, (querySnapshot) => {
@@ -217,11 +203,6 @@ export class GlobalFunctionsService {
   showDashboardElement(screenWidth: number) {
     if (window.innerWidth < screenWidth && this.globalVariables.showThread) this.globalVariables.showChannelMenu = false;
     else if (window.innerWidth >= 800) this.globalVariables.showChannelMenu = true;
-  }
-
-  submitChannelNameChange(newTitle: string): void {
-    const channelId = this.globalVariables.openChannel.id; // Die ID des aktuellen Kanals
-    this.firebaseChannelService.updateChannelTitle(channelId, newTitle);
   }
 
   /**
@@ -247,7 +228,6 @@ export class GlobalFunctionsService {
     const allowedCharPattern = /[^a-zA-Z0-9\s.,!?/:;%&=@#'§$€°ÄäÖöÜüß_-]/g;
     const forbiddenCharacters = messageWithoutEmojis.match(allowedCharPattern) || [];
     const uniqueChar = Array.from(new Set(forbiddenCharacters)).join(', ');
-    console.log(uniqueChar);
     return uniqueChar;
   }
 
@@ -267,5 +247,55 @@ export class GlobalFunctionsService {
       result.textAfterUrl = message.split(result.messageImgUrl)[1].trim();
     }
     return result;
+  }
+
+  //functions for loading the Channel
+  /**
+   * this funktion sets the flag to show the header for channels and take over information of the related channel object to global variables
+   * @param channel - object which contains information of selecet channel
+   */
+  openChannel(channel: any) {
+    this.globalVariables.scrolledToBottom = false;
+    this.globalVariables.isUserChat = false;
+    this.getChatUserData(channel.members);
+    this.globalVariables.openChannel.desc = channel.description;
+    this.globalVariables.openChannel.titel = channel.channelName;
+    this.globalVariables.openChannel.id = channel.id;
+    this.globalVariables.openChannel.chatId = channel.chatId;
+    this.globalVariables.openChannel.creator = channel.creator;
+    this.globalVariables.openChannel.memberCount = channel.members.length;
+    this.firebaseChatService.activeChatId = channel.chatId;
+    this.showChat();
+  }
+
+
+  /**
+   * This function fills the channelUser Array with all relevant data
+   * @param member - Array of member ids
+   */
+  async getChatUserData(member: string[]) {
+    this.globalVariables.openChannelUser = [];
+    this.globalVariables.notInOpenChannelUser = [];
+    this.globalVariables.allUsers.forEach(user => {
+      if (member.includes(user.id)) {
+        this.globalVariables.openChannelUser.push(user);
+      } else {
+        this.globalVariables.notInOpenChannelUser.push(user);
+      }
+    });
+  }
+
+
+  //this function should load the welcome channel when user logged in
+  async getStartChannel() {
+    await this.firebaseChannelService.getChannelData('fsjWrBdDhpg1SvocXmxS')
+      .then(channelData => {
+        if (channelData) {
+          channelData['id'] = 'fsjWrBdDhpg1SvocXmxS';
+          this.openChannel(channelData);
+          this.getChatUserData(channelData['members']);
+        } else console.warn('Channel-Daten wurden nicht gefunden.');
+      })
+      .catch(error => console.error('Fehler beim Abrufen der Daten:', error));
   }
 }

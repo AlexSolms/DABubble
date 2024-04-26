@@ -31,9 +31,10 @@ export class ReactionsComponent {
   globaleVariables = inject(GlobalVariablesService);
   globalFunctions = inject(GlobalFunctionsService);
   firebaseChatService = inject(FirebaseChatService);
-  @Output() newEmoji = new EventEmitter<string>();
+  @Output() isMessageEdit = new EventEmitter<boolean>();
   @Input() message: any;
   @Input() originalMessage: any;
+  @Input() isCurrentUser: boolean = false;
 
   // Variable für das ausgewählte Emoji
   choosedEmoji: string = '';
@@ -58,10 +59,7 @@ export class ReactionsComponent {
    * Fetch on init of the API.
    */
   ngOnInit(): void {
-    this.getEmojis();
-    this.messageInfo = this.globalFunctions.checkMessage(this.message.message);
-    this.isImage = this.messageInfo.hasUrl;
-    this.switchUrlWithAlias();
+    
     this.chatFamiliy = this.globaleVariables.isUserChat ? 'chatusers' : 'chatchannels';
   }
 
@@ -108,7 +106,7 @@ export class ReactionsComponent {
    */
   public showInInput(emoji: any): void {
 
-    this.newEmoji.emit(emoji);
+    //this.newEmoji.emit(emoji);
     if (this.message.emoji[0].icon === '') {
       this.message.emoji[0].icon = emoji.character;
       this.message.emoji[0].userId = [this.globaleVariables.activeID];
@@ -137,6 +135,7 @@ export class ReactionsComponent {
    * Open and close Emoji Picker depend on style value.
    */
   openEmojis() {
+    this.getEmojis();  
     this.showEmojiList = !this.showEmojiList;
   }
 
@@ -165,13 +164,18 @@ export class ReactionsComponent {
    * this function opens shows the edit Message options
    */
   editOpen() { 
-    this.globaleVariables.editMessage = true; 
+    this.messageInfo = this.globalFunctions.checkMessage(this.originalMessage.message);
+    this.isImage = this.messageInfo.hasUrl;
+    this.switchUrlWithAlias();
+    this.editMessage = true; 
+    this.isMessageEdit.emit(true);
   }
   /**
    * this function opens hides the edit Message options
    */
   closeEdit(){
-    this.globaleVariables.editMessage = false;
+    this.editMessage = false;
+    this.isMessageEdit.emit(false);
   }
 
 /**
@@ -210,7 +214,8 @@ export class ReactionsComponent {
    * this function closes the edit message 
    */
   editClose() {
-    this.globaleVariables.editMessage = false;
+    this.editMessage = false;
+    this.isMessageEdit.emit(false);
     this.message.message = this.originalMessage.message;
   }
 
@@ -221,7 +226,8 @@ export class ReactionsComponent {
     this.forbiddenChars = this.globalFunctions.isMessageValid(this.message.message); 
     this.message.message = this.message.message.replace(this.downloadURLAlias, this.downloadURL);
     if (this.forbiddenChars.length === 0) {
-      this.globaleVariables.editMessage = false;
+      this.editMessage = false;
+      this.isMessageEdit.emit(false);
       this.globaleVariables.messageData = this.message;
       let chatFamiliy = this.globaleVariables.isUserChat ? 'chatusers' : 'chatchannels';
       this.firebaseChatService.sendMessage(

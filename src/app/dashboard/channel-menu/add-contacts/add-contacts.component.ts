@@ -4,14 +4,10 @@ import { ButtonComponent } from 'app/shared/button/button.component';
 import { InputfieldComponent } from 'app/shared/inputfield/inputfield.component';
 import { GlobalFunctionsService } from 'app/services/app-services/global-functions.service';
 import { GlobalVariablesService } from 'app/services/app-services/global-variables.service';
-//import { AddNewChannelComponent } from '../add-new-channel/add-new-channel.component';
 import { FirebaseChatService } from 'app/services/firebase-services/firebase-chat.service';
 import { FirebaseChannelService } from 'app/services/firebase-services/firebase-channel.service';
-import { Observable, from, map, of, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { FirebaseUserService } from 'app/services/firebase-services/firebase-user.service';
-//import { User } from 'app/models/user.class';
-//import { addDoc, collection, Firestore } from '@angular/fire/firestore';
-//import { ChannelMenuComponent } from '../channel-menu.component';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
@@ -22,8 +18,6 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
     ButtonComponent,
     CommonModule,
     InputfieldComponent,
-   // AddNewChannelComponent,
-    //ChannelMenuComponent,
     FormsModule,
   ],
   templateUrl: './add-contacts.component.html',
@@ -119,16 +113,40 @@ export class AddContactsComponent implements OnInit {
   */
   async addNewChannel() {
     this.addedChannelId = await this.addChannelGetId();
-    const addedChatId: string = await this.addChatForChannelGetChatId(); 
+    const addedChatId: string = await this.addChatForChannelGetChatId();
     await this.updateChannelWithChatId(addedChatId);
     if (addedChatId) {
       this.firebaseChatService.activeChatId = addedChatId;
       this.globalVariables.openChannel.chatId = addedChatId;
     }
+    this.addNewChannelSupport(addedChatId);
+  }
+
+  /**
+   * this function is just an outsource of function needed in addNewChannel
+   * @param addedChatId - string
+   */
+   addNewChannelSupport(addedChatId: string) {
     this.addChatIdIntoUser(this.selectedUsers);
+    this.globalVariables.openChannel.id = this.addedChannelId;
     this.firebaseChatService.changeActiveChannel();
     this.globalVariables.openChannel.titel = this.globalVariables.channelData.channelName;
+    this.pushNewChannelInViewableChannels(this.addedChannelId, addedChatId, this.globalVariables.channelData.channelName);
+    let uniqueIds = Array.from(new Set(this.selectedUsers.map(item => item.id)));
+    if(uniqueIds.length === 0)uniqueIds.push(this.globalVariables.activeID);
+    this.globalFunctions.getChatUserData(uniqueIds);
     this.resetAndCloseOverlay();
+  }
+
+  /**
+   * this function adds the new channel into the viewableChannelplusId array for channelmenu
+   */
+  pushNewChannelInViewableChannels(addedChannelId: string, addedChatId: string, channelName: string) {
+    this.globalVariables.viewableChannelplusId.push({
+      channelName: channelName,
+      chatId: addedChatId,
+      channelId: addedChannelId
+    });
   }
 
   /**
@@ -159,7 +177,7 @@ export class AddContactsComponent implements OnInit {
     await this.firebaseChatService
       .addChat(this.addedChannelId, 'chatchannels')
       .then((response) => {
-        id = response.id; 
+        id = response.id;
       })
       .catch((error) => {
         console.error('Fehler beim Hinzufügen des Chats:', error);
@@ -218,7 +236,6 @@ export class AddContactsComponent implements OnInit {
   }
 
   close() {
-    //this.globalVariables.showProfile = false;
     this.globalVariables.adduser = false;
     document.body.style.overflow = 'auto';
   }

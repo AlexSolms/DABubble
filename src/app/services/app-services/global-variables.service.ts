@@ -38,7 +38,6 @@ export class GlobalVariablesService {
   isEditingChannel: boolean = false;
   headerShowMembers: boolean = false;
   newMessage: string = '';
-  //showEmojiContainer: boolean = false;
   scrolledToBottom: boolean = false;
   isMembersPopupOpen: boolean = false;
 
@@ -110,22 +109,23 @@ export class GlobalVariablesService {
 
   //this is the object for the active channel information. Used in channel-menu
   openChannel = {
-    titel: 'Willkommen',
-    desc: 'moin',
+    titel: '',
+    desc: '',
     id: 'fsjWrBdDhpg1SvocXmxS',
     chatId: 'NQMdt08FAcXbVroDLhvm',
-    creator: 'v7pZ6K5geifCK8a30Epa1YuSlER2',
-    memberCount: 11
+    creator: '',
+    memberCount: 0
   };
 
   //this Array contains all users of the active chat
-  openChannelUser = [
-    {
-      id: '',
-      name: '',
-      img: ''
-    }
-  ]
+  openChannelUser: { name: string; id: string; img: string, isActive: boolean}[] = [];
+
+  allUsers: { name: string; id: string; img: string, isActive: boolean }[] = [];
+
+  notInOpenChannelUser : { name: string; id: string; img: string, isActive: boolean}[] = [];
+
+  viewableChannel : Array<string> = [];
+  viewableChannelplusId =[{channelName:'', chatId:'', channelId:''}];
 
 
   //wird in edit-channel.component, add-contacts.component und add-to-channel.component verwendet
@@ -136,8 +136,6 @@ export class GlobalVariablesService {
     id: '',
     creator: '',
     members: [] as any[],
-    /* owner: '',
-    allowedUser: ['id1', '1d2'] */
   };
 
   //variable for chats
@@ -157,21 +155,12 @@ export class GlobalVariablesService {
   choosedEmoji: any = { icon: '', userID: '' }; // this is the emoji which is choosen in emoji-picker
   message: any;
 
-  editMessage: boolean = false;
-
   imprintActive = false;
   showSplashScreen = false;
 
+  allChannels: any = {name: [], id: []};
+
   constructor() { }
 
-  //eine Idee:
-  //wir müssen die User überall mit der ID ansprechen und nur wenn wir den Namen brauchen holen wir ihn.
-  //wir müssten also inern ausschließlich mit den IDs arbeiten und  nur wenn wir den Profilnamen anzeigen lassen wollen wird hier hin verwiesen.
-  // dadurch können user auch den gleichen Namen haben.
-  /*  allUserIDs = [
-     {
-       userId: '',
-       userName: '',
-     },
-   ]; */
+ 
 }

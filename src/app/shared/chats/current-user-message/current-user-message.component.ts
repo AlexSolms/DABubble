@@ -1,10 +1,9 @@
 import {
-  ChangeDetectorRef,
   Component,
   ElementRef,
-  HostListener,
   inject,
   Input,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import {
@@ -49,6 +48,8 @@ export class CurrentUserMessageComponent {
   @Input() index: any;
   @Input() isThread: boolean = false;
 
+  @ViewChild('messageTextareaBubble', {static: false}) messageTextarea!: ElementRef<HTMLTextAreaElement>;
+
   postingTime: string | null = null;
   user: User = new User();
   originalMessage = {
@@ -65,6 +66,7 @@ export class CurrentUserMessageComponent {
   mouseover: boolean = false;
   hoverUser: string = '';
   openReaction: boolean = false;
+  localEditMessage: boolean = false;
 
   unsubUser;
   userId: string = 'guest';
@@ -76,12 +78,9 @@ export class CurrentUserMessageComponent {
   count: number = 0;
   isImage: boolean = false;
 
-  constructor(
-    private changeDetector: ChangeDetectorRef,
-    private elementRef: ElementRef
-  ) {
+  constructor() {
     this.unsubUser = this.getUser(this.userId);
-  }
+  } 
 
   /**
    * this function unsubscribes the containing content
@@ -91,7 +90,7 @@ export class CurrentUserMessageComponent {
   }
 
   /**
-   * thsi function returns the reference to the user doc
+   * this function returns the reference to the user doc
    * @param docId - id of user
    * @returns - referenz of document
    */
@@ -124,9 +123,6 @@ export class CurrentUserMessageComponent {
     this.isImage = this.messageInfo.hasUrl;
   }
 
-
-
-
   /**
    * this function clones the original message object for later remove logic
    */
@@ -151,7 +147,7 @@ export class CurrentUserMessageComponent {
 
 
   openAnswers() {
-    this.globalVariables.bufferThreadOpen = !this.globalVariables.bufferThreadOpen; 
+    this.globalVariables.bufferThreadOpen = !this.globalVariables.bufferThreadOpen;
     this.globalVariables.showThread = !this.globalVariables.showThread;
     this.globalVariables.answerKey = this.answerKey;
     this.globalVariables.answerCount = this.answercount;
@@ -172,24 +168,16 @@ export class CurrentUserMessageComponent {
     this.globalVariables.messageThreadStart = { message, userId, timestamp, userName, userImgPath };
   }
 
-  onSelectMessage() {
-    if(!this.activeMessage)this.globalVariables.editMessage = false;
-    this.activeMessage = true;
-    this.openReaction = true;
-    
-  }
-
-  @HostListener('document:click', ['$event'])
-  onClick(event: any) {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
-      if(!this.globalVariables.editMessage)
-      this.onCloseReactions();
+  onMouseOver(index: number) {
+    if (this.message.emoji[index].icon) {
+      this.mouseover = true;
+      this.hoverIndex = index;
+      this.getFirstUserOfEmoji(index);
     }
   }
 
-  onCloseReactions() {
-    this.activeMessage = false
-    this.openReaction = false;
+  onMouseOut() {
+    this.mouseover = false;
   }
 
   addUserIdToEmoji(emoji: any, index: number) {
@@ -236,16 +224,56 @@ export class CurrentUserMessageComponent {
     }
   }
 
-  onMouseOver(index: number) {
-    if (this.message.emoji[index].icon) {
-      this.mouseover = true;
-      this.hoverIndex = index;
-      this.getFirstUserOfEmoji(index);
-    }
+  onSelectMessage() {
+    //if (!this.activeMessage) this.globalVariables.editMessage = false;
+    this.activeMessage = true;
+    this.openReaction = true;
   }
 
-  onMouseOut() {
-    this.mouseover = false;
+  onLeaveMessage() {
+    this.activeMessage = false;
+    this.openReaction = false;
+    this.localEditMessage = false;
   }
- 
+
+  showMessageBeforeImg(): boolean{
+    let check = false;
+    if(this.messageInfo.message !== '')check = true;
+    if(this.localEditMessage) check = false;
+    return check;
+  }
+
+  showMessageImage(): boolean {
+    let check = false;
+    if(this.messageInfo.hasUrl)check = true;
+    if(this.localEditMessage) check = false;
+    return check;
+  }
+
+  showMessageAfterImage(): boolean{
+    let check = false;
+    if(this.messageInfo.textAfterUrl !== '')check = true;
+    if(this.localEditMessage) check = false;
+    return check;
+  }
+
+ /**
+  * this function sets the localEditMessage variable regarding edit button of app-reaction is hit
+  * @param check - boolean true if edit was hit
+  */
+  isMessageEdit(check: boolean){
+    this.localEditMessage = check;
+    if (check) setTimeout(() => this.setFocusOnTextarea(), 100);
+  }
+
+  /**
+   * this function sets the focus on the textarea of this element
+   */
+  setFocusOnTextarea() {
+    if (this.messageTextarea) {
+        const textareaElement = this.messageTextarea.nativeElement;
+        if (textareaElement) textareaElement.focus();  
+    }
+}
+
 }

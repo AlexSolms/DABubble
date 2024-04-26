@@ -58,7 +58,6 @@ export class SearchbarComponent {
           this.globalVariables.openChannel.chatId = result['chatId'];
           this.globalVariables.openChannel.creator = result['creator'];
           this.globalVariables.openChannel.desc = result['description'];
-          this.globalVariables.openChannel.id = data;
           this.globalVariables.openChannel.titel = result['channelName'];
           this.overwriteChannel();
         } else {
@@ -75,25 +74,14 @@ export class SearchbarComponent {
   overwriteChannel() {
     this.firebaseChannelService
       .getChannelMessages(this.globalVariables.openChannel.chatId)
-      .then((result) => {
-        this.globalVariables.chatChannel = new ChatChannel(result);
-        console.log(this.globalVariables.chatChannel);
+      .then((ergebnis) => {
+        this.globalVariables.chatChannel = new ChatChannel(ergebnis);
       })
       .catch((error) => {
         console.error('Fehler beim Laden der Kanalnachrichten:', error);
       });
   }
 
-  /**
-   * gives me the docID of the user to give better workflow and get data of him
-   * @param id user id
-   * @returns
-   */
-  async getDataConnectedWithID(id: string) {
-    let docID = await this.firebaseUserService.getUserDocIdWithName(id);
-    let data = this.firebaseUserService.getUserData(docID[0]);
-    return data;
-  }
 
   /**
    * init function which get data and convert them (name/chatId etc.)

@@ -13,6 +13,7 @@ import 'aos/dist/aos.css';
 import { GlobalFunctionsService } from 'app/services/app-services/global-functions.service';
 import { GoBackButtonComponent } from 'app/shared/go-back-button/go-back-button.component';
 import { Router } from '@angular/router';
+import { FirebaseChannelService } from 'app/services/firebase-services/firebase-channel.service';
 
 @Component({
   selector: 'app-sign-up',
@@ -28,6 +29,7 @@ export class SignUpComponent {
   globalFunctions = inject(GlobalFunctionsService);
   userService = inject(FirebaseUserService);
   toastService = inject(ToastService);
+  firebaseChannelService = inject(FirebaseChannelService);
   private router = inject(Router);
   signUpStep: string = "createAccount"; //createAccount | chooseAvatar
   selectedAvatar: string = '';
@@ -41,7 +43,8 @@ export class SignUpComponent {
     name: "",
     email: "",
     isActive: false,
-    img: ""
+    img: "",
+    relatedChats: ["NQMdt08FAcXbVroDLhvm"]
   }
 
   avatarImgs = [
@@ -64,6 +67,7 @@ export class SignUpComponent {
   goCreateAccount() {
     this.signUpStep = "createAccount";
   }
+
   ngAfterViewInit() {
     window.dispatchEvent(new Event('resize'));
     Aos.init();
@@ -94,17 +98,23 @@ export class SignUpComponent {
     const email = this.signUpUserData.email;
     const password = this.signUpUserPassword;
     this.signUpUserData.img = this.selectedAvatar;
+    let uid = '';
     try {
       const userCredential = await this.authService.register(email, password);
-      console.log(userCredential);
-      const uid = userCredential.user.uid;
+      uid = userCredential.user.uid;
       this.userService.addUser(uid, this.signUpUserData);
       this.toastService.showMessage('Konto erfolgreich erstellt!');
       setTimeout(() => this.router.navigate(['/']), 2000);
     } catch (error) {
-      console.error("Registrierungsfehler:", error);
       this.toastService.showMessage('Email bereits registriert!');
     }
+    this.addNewUserToWelcome(uid);
   }
+
+  async addNewUserToWelcome(uid: string) {
+    const channelId = 'fsjWrBdDhpg1SvocXmxS';
+    this.firebaseChannelService.addUserToChannel(channelId, uid);
+  }
+
 }
 

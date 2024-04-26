@@ -1,6 +1,7 @@
 @import './../../../../styles.scss';
 
 .inputfield {
+    position: relative;
     width: 90%;
     height: 145px;
     font-size: 18px !important;
@@ -22,9 +23,38 @@
       &:focus-visible {
         outline: 0;
       }
+
+     
+
     }
   
-  
+    .listContainer{
+      position: absolute;
+      overflow: hidden;
+      top: -50px;
+      left: 50px;
+      height: 100px;
+      background-color: $white;
+      box-shadow: 3px 3px 7px 1px rgba(0, 0, 0, 0.6);
+      border-radius: 20px;
+      z-index: 2;
+      margin-top: 16px;
+      .list{
+        overflow-y: auto;
+        height: 100%;
+        font-size: 16px;
+        font-weight: 400;
+        padding-top: 12px;
+        box-sizing: border-box;
+        .singleName{
+          padding: 2px 12px;
+          cursor: pointer;
+          &:hover{
+            color: $purple3;
+          }
+        }
+      }
+    }
   
     .controllElementsContainer {
       position: relative;

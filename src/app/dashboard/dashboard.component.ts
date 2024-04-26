@@ -4,6 +4,9 @@ import { ChatComponent } from './chat/chat.component';
 import { ThreadComponent } from './thread/thread.component';
 import { GlobalVariablesService } from 'app/services/app-services/global-variables.service';
 import { CommonModule } from '@angular/common';
+import { GlobalFunctionsService } from 'app/services/app-services/global-functions.service';
+import { FirebaseChannelService } from 'app/services/firebase-services/firebase-channel.service';
+import { FirebaseUserService } from 'app/services/firebase-services/firebase-user.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,27 +21,30 @@ import { CommonModule } from '@angular/common';
   ],
 })
 
-
 export class DashboardComponent {
   globalVariables = inject(GlobalVariablesService);
+  globalFunctions = inject(GlobalFunctionsService);
+  firebaseChannelService = inject(FirebaseChannelService);
+  firebaseUserService = inject(FirebaseUserService);
 
-  
-
-  
   constructor() {
     this.globalVariables.login = false;
+    this.globalVariables.imprintActive = false;
   }
-  ngOnInit(){
+  ngOnInit() {
     this.globalVariables.isChatVisable = window.innerWidth > 800;
     this.globalVariables.bufferThreadOpen = this.globalVariables.showThread;
+    this.firebaseChannelService.getChannelsWhereUserIsMember();
+    this.firebaseUserService.getAllUser();
+    this.globalFunctions.getStartChannel();
   }
 
   toggleChannelMenu() {
     this.globalVariables.showChannelMenu = !this.globalVariables.showChannelMenu;
-    if(this.globalVariables.desktop800 && !this.globalVariables.desktop1200 && this.globalVariables.bufferThreadOpen)
-    this.globalVariables.showThread = !this.globalVariables.showThread;
+    if (this.globalVariables.desktop800 && !this.globalVariables.desktop1200 && this.globalVariables.bufferThreadOpen)
+      this.globalVariables.showThread = !this.globalVariables.showThread;
     this.globalVariables.isMenuOpen = !this.globalVariables.isMenuOpen;
   }
 
-  
+
 }

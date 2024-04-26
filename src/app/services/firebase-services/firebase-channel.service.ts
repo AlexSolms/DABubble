@@ -36,7 +36,7 @@ export class FirebaseChannelService {
   async updateChannel(channelId: string, item: any) {
     const docRef = doc(this.firestore, 'channels', channelId);
     return updateDoc(docRef, item)
-      .then(() => console.log('Daten erfolgreich aktualisiert'))
+      .then(() => {const success = true})//console.log('Daten erfolgreich aktualisiert'))
       .catch((error) =>
         console.error('Fehler beim Aktualisieren der Daten', error)
       );
@@ -62,7 +62,7 @@ export class FirebaseChannelService {
 
   async loadChannelDataWithChatID(chatId: string) {
     let docIds = await this.getDocId(chatId);
-    return docIds
+    return docIds;
   }
 
   async getChannelMessages(channelChatId: string) {
@@ -73,7 +73,6 @@ export class FirebaseChannelService {
     } else {
       return null;
     }
-
   }
 
   async listenToChannelData(channelId: string) {
@@ -92,19 +91,6 @@ export class FirebaseChannelService {
    */
   async updateDataChannel(data: { [x: string]: any }, docId: string) {
     await updateDoc(doc(this.firestore, 'channels', docId), data);
-  }
-
-  updateChannelTitle(channelId: string, newTitle: string): void {
-    // Aktualisiere den Kanal im Backend, zum Beispiel in Firebase oder einer anderen Datenbank
-    this.updateChannel(channelId, { titel: newTitle }).then(() => {
-      // Aktualisiere den lokalen Zustand direkt nach dem erfolgreichen Backend-Update
-      if (
-        this.globalVariables.openChannel &&
-        this.globalVariables.openChannel.id === channelId
-      ) {
-        this.globalVariables.openChannel.titel = newTitle;
-      }
-    });
   }
 
   /**
@@ -131,10 +117,9 @@ export class FirebaseChannelService {
     const docId = await this.getDocId(channelId);
     await this.deleteChannelIdFromUsers(channelId);
     const channelDocRef = doc(this.firestore, 'channels', docId[0]);
-    await deleteDoc(channelDocRef)
-    const chatChannelRef = doc(this.firestore, 'chatchannels', channelId)
-    await deleteDoc (chatChannelRef);
-    this.firebaseChatService.changeActiveChannel();
+    await deleteDoc(channelDocRef);
+    const chatChannelRef = doc(this.firestore, 'chatchannels', channelId);
+    await deleteDoc(chatChannelRef);
   }
 
   /**
@@ -195,4 +180,34 @@ export class FirebaseChannelService {
   getChannelRef() {
     return collection(this.firestore, 'channels');
   }
+
+  // get all allowed channels for activ user
+  async getChannelsWhereUserIsMember() {
+    const querySnapshot = await getDocs(this.getChannelRef());
+    this.globalVariables.viewableChannel = [];
+    this.globalVariables.viewableChannelplusId = [];
+    querySnapshot.forEach((doc) => {
+      this.addRelevantChanneldata(doc);
+
+    });
+  }
+
+  addRelevantChanneldata(doc:any){
+    const channelData = doc.data();
+    if (Array.isArray(channelData['members'])) {
+      const isMember = channelData['members'].includes(this.globalVariables.activeID);
+      if (isMember) {
+        const channelName = channelData['channelName'];
+        const channelId = doc.id;
+        const chatId = channelData['chatId'];
+        this.globalVariables.viewableChannel.push(channelName);
+        this.globalVariables.viewableChannelplusId.push({
+          channelName: channelName,
+          chatId: chatId,
+          channelId: channelId
+          })
+      }
+    }
+  }
+
 }

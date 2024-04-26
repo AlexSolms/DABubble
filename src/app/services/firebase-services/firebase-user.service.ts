@@ -87,6 +87,7 @@ export class FirebaseUserService {
       email: user.email,
       isActive: user.isActive,
       img: user.img,
+      relatedChats: user.relatedChats,
     };
   }
 
@@ -135,18 +136,26 @@ export class FirebaseUserService {
   }
 
   /**
-   * get docId with searching the name in Users to find Doc ID
+   * this function saves all user in a global array
    */
-
-  async getUserDocIdWithName(name: string): Promise<string[]> {
-    const usersCollectionRef = collection(this.firestore, 'users');
-    const q = query(usersCollectionRef, where('name', '==', name));
-    const querySnapshot = await getDocs(q);
-    const docIds: string[] = [];
-    querySnapshot.forEach((doc) => {
-      docIds.push(doc.id);
-    });
-    return docIds;
+  async getAllUser(){
+    try {
+      const docSnap = await getDocs(this.getUsersRef());
+      this.globalVariables.allUsers = []
+      docSnap.forEach((doc) => {
+        const userData = doc.data();   
+        this.globalVariables.allUsers.push({
+                    name: userData['name'],
+                    id: doc.id,
+                    img: userData['img'],
+                    isActive: userData['isActive'],
+                });
+            
+      });     
+    } catch (error) {
+      console.error('Fehler beim Abrufen der Benutzer:', error);
+    }
+    
   }
 
   /**
@@ -160,10 +169,8 @@ export class FirebaseUserService {
     if (userDocSnapshot.exists()) {
       const userData = userDocSnapshot.data();
       if (userData['relatedChats'] && Array.isArray(userData['relatedChats'])) {
-        console.log('hier1');
         await updateDoc(userDocRef, { relatedChats: arrayUnion(chatId) });
       } else {
-        console.log('hier2');
         await updateDoc(userDocRef, { relatedChats: [chatId] });
       }
     } else {
@@ -180,7 +187,6 @@ export class FirebaseUserService {
           const updatedRelatedChats = userData['relatedChats'].filter(
             (chatId: string) => chatId !== channelId
           );
-          console.log('hier3');
           updateDoc(userDocRef, { relatedChats: updatedRelatedChats });
         } else {
           console.log('Benutzerdokument nicht gefunden');
